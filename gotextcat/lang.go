@@ -184,7 +184,7 @@ type LangInfo struct {
 
 
 // fn is LMI filename, it has format like  name.id.lm
-// name is language name may with codec name, id is language id defined in watlas
+// name is language name may with codec name, id is language id
 func loadLangInfo(fn string) (li *LangInfo, err error) {
     fin, err := os.Open(fn)
     if err != nil {return}
