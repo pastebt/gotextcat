@@ -5,7 +5,7 @@ import (
     "fmt"
     "log"
     "io/ioutil"
-    "fgdwcfgo/lang"
+    "gptextcat"
 )
 
 
