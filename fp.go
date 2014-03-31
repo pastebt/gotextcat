@@ -8,6 +8,7 @@ import (
     "gptextcat"
 )
 
+// Calculate fingerprint for input file or string, can be used to generate *.lm
 
 func main() {
     if len(os.Args) != 2 {
