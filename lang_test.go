@@ -4,8 +4,6 @@ package gotextcat
 import (
     "testing"
     "fmt"
-    "regexp"
-    "strings"
 )
 
 
@@ -117,63 +115,4 @@ func strSplit(src string) []string {
     }
     if b < i {ret = append(ret, src[b:i])}
     return ret
-}
-
-
-func TestSplit(tst *testing.T) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaa"
-    re := regexp.MustCompile(`[0-9\s]+`)
-    s1 := strSplit(src)
-    tst.Log(s1)
-    s2 := splitByByte(src, []byte("0123456789 \t\r\n\v\f"))
-    tst.Log(s2)
-    s3 := re.Split(src, -1)
-    tst.Log(s3)
-}
-
-
-func BenchmarkStringSplit(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaa"
-    _ = strings.Split(src, "t")
-    for i := 0; i < bm.N; i++ {
-        //_ = strings.Split(src, "0123456789 \t\r\n\v\f")
-        _ = strSplit(src)
-        //_ = strings.Split(src, "t")
-    }
-}
-
-
-func BenchmarkSplitByByte(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaa"
-    _ = strings.Split(src, "t")
-    //seps := []byte("0123456789 \t\r\n\v")
-    seps := []byte("0123456789 \t\r\n\v")
-    for i := 0; i < bm.N; i++ {
-        _ = util.SplitByByte(src, seps)
-        //_ = strSplitString(src, " \t\r\n\v")
-    }
-}
-
-
-func BenchmarkStringSplitter(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaa"
-    _ = strings.Split(src, "t")
-    seps := []byte("0123456789 \t\r\n\v")
-    sp := util.MakeSplitter(seps)
-    for i := 0; i < bm.N; i++ {
-        _ = sp.Split(src)
-        //_ = util.SplitByByte(src, seps)
-        //_ = strSplitString(src, " \t\r\n\v")
-    }
-}
-
-
-func BenchmarkReSplit(bm *testing.B) {
-    //re := regexp.MustCompile(`\s+`)
-    re := regexp.MustCompile(`[0-9\s]+`)
-    //re := regexp.MustCompile(`t`)
-    src := "test th1is a2   te2t3s4i5n6g7aaaaa"
-    for i := 0; i < bm.N; i++ {
-        _ = re.Split(src, -1)
-    }
 }
