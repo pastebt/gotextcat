@@ -5,7 +5,7 @@ import (
     "fmt"
     "log"
     "io/ioutil"
-    "gptextcat"
+    "github.com/pastebt/gotextcat"
 )
 
 // Calculate fingerprint for input file or string, can be used to generate *.lm
@@ -26,5 +26,5 @@ func main() {
         defer fin.Close()
         data, err = ioutil.ReadAll(fin)
     }
-    lang.PrintFingerPrint(string(data))
+    gotextcat.PrintFingerPrint(string(data))
 }

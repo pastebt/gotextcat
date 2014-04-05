@@ -21,6 +21,6 @@ go test github.com/pastebt/gotextcat
 
 DEMO
 ====
-run command:
- go build fp.go 
+* cd demo
+* go build fp.go
 got generate utility fp, which can be used to generate *.lm file
