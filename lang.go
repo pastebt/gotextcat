@@ -19,6 +19,7 @@ import (
     "os"
     "log"
     "fmt"
+    "path"
     "sort"
     "bufio"
     "errors"
@@ -242,8 +243,9 @@ func (li *LangInfo)GetName() string {
 var infoList []*LangInfo
 
 
-func init() {
-    m, err := filepath.Glob("/usr/share/gotextcat/data/LMI/*.lm")
+func Init(dn string) {
+    //m, err := filepath.Glob("/usr/share/gotextcat/data/LMI/*.lm")
+    m, err := filepath.Glob(path.Join(dn, "*.lm"))
     if err != nil {
         log.Fatal("lang init", err)
     }
