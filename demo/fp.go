@@ -12,6 +12,7 @@ import (
 
 func main() {
     if len(os.Args) != 2 {
+        fmt.Println("Generate fingerprint from input, - means stdin")
         fmt.Println("Usage:", os.Args[0], "filename|-")
         os.Exit(1)
     }

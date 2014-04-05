@@ -22,6 +22,7 @@ func TestFingerPrint(tst *testing.T) {
                 "\x8b 1 \x8b_ 1 \xb5 1 \xb5\x8b 1 \xb5\x8b_ 1 \xe6 1 " +
                 "\xe6\xb5 1 \xe6\xb5\x8b 1 \xe6\xb5\x8b_ 1 "},
     }
+    Init("/usr/share/gotextcat/data/LMI")
     for _, dat := range okdata {
         fp, _ := getFingerPrint(dat[0])
         ret := ""
@@ -42,6 +43,7 @@ func TestLanguage(tst *testing.T) {
     dat := []string{"este é um teste de", "aa"}     // #define MINDOCSIZE  25
     //dat := []string{"este", ""}
     tst.Log(len(infoList))
+    Init("/usr/share/gotextcat/data/LMI")
     fp, _ := getFingerPrint(dat[0])
     tst.Log(fp)
     imap := make(map[int][]int)
@@ -71,48 +73,11 @@ func TestGetLanguage(tst *testing.T) {
         {"Condiciones específicas de uso de Galeon Centro de ayuda", "spanish"},
         {"Lo sentimos, esta página no existe o no está disponible", "spanish"},
     }
+    Init("/usr/share/gotextcat/data/LMI")
     for _, dat := range okdata {
         l1, l2 := GetLanguage(dat[0])
         if l1 != nil && l1.GetName() != dat[1] {
             tst.Error(dat, l1.GetName(), l2.GetName())
         }
     }
-}
-
-
-func BenchmarkConcatString(bm *testing.B) {
-    ss := "hello world"
-    m := make(map[string]int)
-    for i := 0; i < bm.N; i++ {
-        //_ = "_" + ss + "_"
-        colGram(ss, &m)
-    }
-}
-
-
-func BenchmarkBytes2String(bm *testing.B) {
-    b := []byte(" hello world ")
-    m := make(map[string]int)
-    for i := 0; i < bm.N; i++ {
-        //_ = string(b)
-        colGram2(b, &m)
-    }
-}
-
-
-func strSplit(src string) []string {
-    ret := make([]string, 0, 10)
-    b, i := 0, 0
-    for ; i < len(src); i++ {
-        c := src[i]
-        if ('0' <= c && c <= '9') || c == ' ' || c == '\t' ||
-           c == '\n' || c == '\r' || c == '\v' {
-            if b < i {
-                ret = append(ret, src[b:i])
-            }
-            b = i + 1
-        }
-    }
-    if b < i {ret = append(ret, src[b:i])}
-    return ret
 }
