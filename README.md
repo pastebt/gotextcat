@@ -27,4 +27,4 @@ $ go test github.com/pastebt/gotextcat
 $ cd $GOROOT/src/pkg/github.com/pastebt/gotextcat/demo
 $ go build fp.go
 ```
-got generate utility fp, which can be used to generate *.lm file
+Will generate utility fp, which can be used to generate *.lm file
