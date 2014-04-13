@@ -7,14 +7,13 @@ libtextcat golang implementation
 
 ##Install
 ```bash
-$ cd $GOROOT/src/pkg
-$ mkdir -p github.com/pastebt
-$ cd github.com/pastebt
-$ git clone https://github.com/pastebt/gotextcat
+$ go get github.com/pastebt/gotextcat
 ```
+
 ##setup data
 
-copy LMI/*.lm data into /usr/share/gotextcat/data/LMI/ ,
+copy LMI/*.lm data into /usr/share/gotextcat/data/LMI/
+
 
 ##test
 ```bash
