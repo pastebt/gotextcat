@@ -103,7 +103,7 @@ func splitByByte(src string, seps []byte) []string {
     for i := range seps {
         mp[seps[i]] = '1'
     }
-    ret := make([]string, 0, 10)
+    ret := make([]string, 0, len(src) / 3)
     b, i := 0, 0
     for ; i < len(src); i++ {
         if mp[src[i]] == '1' {

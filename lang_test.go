@@ -4,6 +4,7 @@ package gotextcat
 import (
     "testing"
     "fmt"
+    "strings"
 )
 
 
@@ -81,3 +82,130 @@ func TestGetLanguage(tst *testing.T) {
         }
     }
 }
+
+
+func BenchmarkSplitByByte(bm *testing.B) {
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+           "o23293i 2;lmel324r34lrkna l"
+    _ = strings.Split(src, "t")
+    seps := []byte("0123456789 \t\r\n\v")
+    for i := 0; i < bm.N; i++ {
+        _ = splitByByte(src, seps)
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+type Splitter struct {
+    mp []byte
+}
+
+
+func MakeSplitter(seps []byte) *Splitter {
+    sp := &Splitter{make([]byte, 256)}
+    for i := range seps {
+        sp.mp[seps[i]] = '1'
+    }
+    return sp
+}
+
+
+func (sp *Splitter)Split(src string) []string {
+    ret := make([]string, 0, len(src) / 3)
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i {ret = append(ret, src[b:i])}
+            b = i + 1
+        }
+    }
+    if b < i {ret = append(ret, src[b:i])}
+    return ret
+}
+
+
+func (sp *Splitter)SplitRight(src string) []string {
+    ret := make([]string, 0, len(src) / 3)
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i {ret = append(ret, "_" + src[b:i] + "_")}
+            b = i + 1
+        }
+    }
+    if b < i {ret = append(ret, "_" + src[b:i] + "_")}
+    return ret
+}
+func (sp *Splitter)SplitRightB(src []byte) [][]byte {
+    ret := make([][]byte, 0, len(src) / 3)
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i {
+                if b == 0 {
+                    ret = append(ret, src[b:i])
+                } else {
+                    src[b - 1], src[i] = '_', '_'
+                    ret = append(ret, src[b -1 :i + 1])
+                }
+            }
+            b = i + 1
+        }
+    }
+    if b < i {ret = append(ret, src[b:i])}
+    return ret
+}
+
+
+func (sp *Splitter)fakeSplit(src string) (cnt int) {
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i {cnt += 1}
+            b = i + 1
+        }
+    }
+    if b < i {cnt += 1}
+    return cnt
+}
+
+
+func BenchmarkSplitterRight(bm *testing.B) {
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+           "o23293i 2;lmel324r34lrkna l"
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    //bm.Log(sp.SplitRight2(src))
+    for i := 0; i < bm.N; i++ {
+        _ = sp.SplitRight(src)
+    }
+}
+func BenchmarkSplitterRightB(bm *testing.B) {
+    src := []byte("test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+           "o23293i 2;lmel324r34lrkna l")
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    //bm.Log(sp.SplitRightB(src))
+    for i := 0; i < bm.N; i++ {
+        _ = sp.SplitRightB(src)
+    }
+}
+func BenchmarkSplitter(bm *testing.B) {
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+           "o23293i 2;lmel324r34lrkna l"
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    for i := 0; i < bm.N; i++ {
+        _ = sp.Split(src)
+    }
+}
+func BenchmarkSplitterFake(bm *testing.B) {
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+           "o23293i 2;lmel324r34lrkna l"
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    for i := 0; i < bm.N; i++ {
+        _ = sp.fakeSplit(src)
+    }
+}
+
