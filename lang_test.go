@@ -84,6 +84,30 @@ func TestGetLanguage(tst *testing.T) {
 }
 
 
+func Benchmarkb2Ss(bm *testing.B) {
+    a := ""
+    b := []byte("this is a short")
+    for i := 0; i < bm.N; i++ {
+        a = string(b)
+    }
+    bm.Log(a)
+}
+
+
+func Benchmarkb2Sl(bm *testing.B) {
+    a := ""
+    b := []byte("this is a long this is a long this is a long this is a long " +
+           "this is a long this is a long this is a long this is a long this " +
+           "this is a long this is a long this is a long this is a long this " +
+           "this is a long this is a long this is a long this is a long this " +
+           "this is a long this is a long this is a long this is a long this ")
+    for i := 0; i < bm.N; i++ {
+        a = string(b)
+    }
+    bm.Log(a)
+}
+
+
 func BenchmarkSplitByByte(bm *testing.B) {
     src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
            "o23293i 2;lmel324r34lrkna l"
@@ -107,6 +131,23 @@ func MakeSplitter(seps []byte) *Splitter {
         sp.mp[seps[i]] = '1'
     }
     return sp
+}
+
+
+func Gram5(src []byte, dst []map[uint32]uint32) {
+
+}
+
+
+func (sp *Splitter)CalGram5(src []byte, dst []map[uint32]uint32) {
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i { Gram5(src[b:i], dst) }
+            b = i + 1
+        }
+    }
+    if b < i { Gram5(src[b:i], dst) }
 }
 
 
@@ -142,17 +183,25 @@ func (sp *Splitter)SplitRightB(src []byte) [][]byte {
     for ; i < len(src); i++ {
         if mp[src[i]] == '1' {
             if b < i {
+                src[i] = '_'
                 if b == 0 {
-                    ret = append(ret, src[b:i])
+                    ret = append(ret, src[b:i + 1])
                 } else {
-                    src[b - 1], src[i] = '_', '_'
-                    ret = append(ret, src[b -1 :i + 1])
+                    src[b - 1] = '_'
+                    ret = append(ret, src[b -1:i + 1])
                 }
             }
             b = i + 1
         }
     }
-    if b < i {ret = append(ret, src[b:i])}
+    if b < i {
+        if b == 0 {
+            ret = append(ret, src[b:i])
+        } else {
+            src[b - 1] = '_'
+            ret = append(ret, src[b - 1:i])
+        }
+    }
     return ret
 }
 
@@ -171,7 +220,7 @@ func (sp *Splitter)fakeSplit(src string) (cnt int) {
 
 
 func BenchmarkSplitterRight(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
            "o23293i 2;lmel324r34lrkna l"
     seps := []byte("0123456789 \t\r\n\v")
     sp := MakeSplitter(seps)
@@ -181,7 +230,7 @@ func BenchmarkSplitterRight(bm *testing.B) {
     }
 }
 func BenchmarkSplitterRightB(bm *testing.B) {
-    src := []byte("test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+    src := []byte("test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
            "o23293i 2;lmel324r34lrkna l")
     seps := []byte("0123456789 \t\r\n\v")
     sp := MakeSplitter(seps)
@@ -190,8 +239,38 @@ func BenchmarkSplitterRightB(bm *testing.B) {
         _ = sp.SplitRightB(src)
     }
 }
+func BenchmarkSplitterRightBs(bm *testing.B) {
+    src := []byte("test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
+           "o23293i 2;lmel324r34lrkna l")
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    //bm.Log(sp.SplitRightB(src))
+    for i := 0; i < bm.N; i++ {
+        bs := sp.SplitRightB(src)
+        ret := make([]string, len(bs))
+        for i, b := range bs {
+            ret[i] = string(b)
+        }
+    }
+}
+func BenchmarkSplitterRightBl(bm *testing.B) {
+    src := []byte("test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
+           "o23293i 2;lmel324r34lrkna l")
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    //bm.Log(sp.SplitRightB(src))
+    for i := 0; i < bm.N; i++ {
+        bs := sp.SplitRightB(src)
+        ret := make([]uint32, len(bs))
+        for i, b := range bs {
+            for _, bt := range b {
+                ret[i] += (ret[i] << 8) + uint32(bt)
+            }
+        }
+    }
+}
 func BenchmarkSplitter(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
            "o23293i 2;lmel324r34lrkna l"
     seps := []byte("0123456789 \t\r\n\v")
     sp := MakeSplitter(seps)
@@ -200,7 +279,7 @@ func BenchmarkSplitter(bm *testing.B) {
     }
 }
 func BenchmarkSplitterFake(bm *testing.B) {
-    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " + 
+    src := "test th1is a2   te2t3s4i5n6g7aaaaawmd lmwlmd " +
            "o23293i 2;lmel324r34lrkna l"
     seps := []byte("0123456789 \t\r\n\v")
     sp := MakeSplitter(seps)
