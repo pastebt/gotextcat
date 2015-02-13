@@ -23,7 +23,7 @@ $ go test github.com/pastebt/gotextcat
 
 #DEMO
 ```bash
-$ cd $GOROOT/src/pkg/github.com/pastebt/gotextcat/demo
+$ cd $GOPATH/src/pkg/github.com/pastebt/gotextcat/demo
 $ go build fp.go
 ```
 Will generate utility fp, which can be used to generate *.lm file

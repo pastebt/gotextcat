@@ -134,12 +134,24 @@ func MakeSplitter(seps []byte) *Splitter {
 }
 
 
-func Gram5(src []byte, dst []map[uint32]uint32) {
-
+func Gram5(src []byte, dst map[uint64]uint32) {
+    u64 := uint64('_')
+    var s uint8
+    i := 0
+    for s = 8; s < 40; s += 8 {
+        u64 = u64 << s
+        u64 |= uint64(src[i])
+        i += 1
+        if i > len(src) {break}
+    }
+    if s < 40 {
+        u64 |= uint64('_')
+        if s < 32 { u64 = u64 << (32 - s) }
+    }
 }
 
 
-func (sp *Splitter)CalGram5(src []byte, dst []map[uint32]uint32) {
+func (sp *Splitter)CalGram5(src []byte, dst map[uint64]uint32) {
     b, i, mp := 0, 0, sp.mp
     for ; i < len(src); i++ {
         if mp[src[i]] == '1' {
