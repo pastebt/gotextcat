@@ -134,20 +134,35 @@ func MakeSplitter(seps []byte) *Splitter {
 }
 
 
-func Gram5(src []byte, dst map[uint64]uint32) {
+func TestGram5(tst *testing.T) {
+    //var u uint64
+    Gram5t([]byte{1}, tst)
+    Gram5t([]byte{1, 2}, tst)
+    Gram5t([]byte{1, 2, 3}, tst)
+    Gram5t([]byte{1, 2, 3, 4}, tst)
+    Gram5t([]byte{1, 2, 3, 4, 5}, tst)
+    Gram5t([]byte{1, 2, 3, 4, 5, 6}, tst)
+}
+
+
+func Gram5t(src []byte, tst *testing.T) uint64 {
     u64 := uint64('_')
-    var s uint8
-    i := 0
-    for s = 8; s < 40; s += 8 {
-        u64 = u64 << s
+    var i int
+    for i = 0; i < 4 && i < len(src); i++ {
+        u64 = u64 << 8
         u64 |= uint64(src[i])
-        i += 1
-        if i > len(src) {break}
     }
-    if s < 40 {
-        u64 |= uint64('_')
-        if s < 32 { u64 = u64 << (32 - s) }
+    //tst.Logf("%x", u64)
+    if i < 4 {
+        u64 = (u64 << 8) | uint64('_')
+        //if i < 4 { u64 = u64 << uint((5 - i) * 8) }
     }
+    tst.Logf("%x", u64)
+    return u64
+}
+
+
+func Gram5(src []byte, dst map[uint64]uint32) {
 }
 
 
