@@ -147,17 +147,23 @@ func TestGram5(tst *testing.T) {
 
 func Gram5t(src []byte, tst *testing.T) uint64 {
     u64 := uint64('_')
-    var i int
-    for i = 0; i < 4 && i < len(src); i++ {
-        u64 = u64 << 8
-        u64 |= uint64(src[i])
+    tst.Log("-------------------")
+    var i, j int
+    for j = 0; j <= len(src); j++ {
+        for i = 0; i < 4 && ((i + j) < len(src)); i++ {
+            tst.Logf("-%x", u64)
+            u64 = (u64 << 8) | uint64(src[i + j])
+        }
+        if i < 4 {
+            tst.Logf("=%x", u64)
+            u64 = (u64 << 8) | uint64('_')
+        }
+        tst.Logf("+%x", u64)
+        if j < len(src) {
+            u64 = uint64(src[j])
+        }
     }
-    //tst.Logf("%x", u64)
-    if i < 4 {
-        u64 = (u64 << 8) | uint64('_')
-        //if i < 4 { u64 = u64 << uint((5 - i) * 8) }
-    }
-    tst.Logf("%x", u64)
+    tst.Logf("j = %d", j)
     return u64
 }
 
