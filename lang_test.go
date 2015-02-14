@@ -4,12 +4,27 @@ package gotextcat
 import (
     "testing"
     "fmt"
+    "sort"
     "strings"
 )
 
 
 func TestFingerPrint(tst *testing.T) {
+    testFingerPrint(tst, getFingerPrint)
+}
+
+
+func TestFingerPrint2(tst *testing.T) {
+    gfp2 := func (src string) (fp *fingerPrint, size int) {
+        return getFingerPrint2([]byte(src))
+    }
+    testFingerPrint(tst, gfp2)
+}
+
+
+func testFingerPrint(tst *testing.T, gfp func(src string) (fp *fingerPrint, size int)) {
     okdata := [][]string {
+        {"a", "_ 2 _a 1 _a_ 1 a 1 a_ 1 "},
         {"ab", "_ 2 _a 1 _ab 1 _ab_ 1 a 1 ab 1 ab_ 1 b 1 b_ 1 "},
         {"a b", "_ 4 _a 1 _a_ 1 _b 1 _b_ 1 a 1 a_ 1 b 1 b_ 1 "},
         {"abb", "_ 2 b 2 _a 1 _ab 1 _abb 1 _abb_ 1 a 1 ab 1 abb " +
@@ -22,10 +37,12 @@ func TestFingerPrint(tst *testing.T) {
         {"测",  "_ 2 _\xe6 1 _\xe6\xb5 1 _\xe6\xb5\x8b 1 _\xe6\xb5\x8b_ 1 " +
                 "\x8b 1 \x8b_ 1 \xb5 1 \xb5\x8b 1 \xb5\x8b_ 1 \xe6 1 " +
                 "\xe6\xb5 1 \xe6\xb5\x8b 1 \xe6\xb5\x8b_ 1 "},
+
     }
     Init("/usr/share/gotextcat/data/LMI")
     for _, dat := range okdata {
-        fp, _ := getFingerPrint(dat[0])
+        //fp, _ := getFingerPrint(dat[0])
+        fp, _ := gfp(dat[0])
         ret := ""
         for _, i := range fp.items {
             ret = ret + fmt.Sprintf("%s %d ", i.str, i.cnt)
@@ -36,6 +53,48 @@ func TestFingerPrint(tst *testing.T) {
     }
 }
 
+
+func getFingerPrint2(src []byte) (fp *fingerPrint, size int) {
+    var fpmp = make(map[string]int)
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    cal := func(pha []byte) {
+        //fmt.Printf("phase = [%s]\n", string(pha))
+        size += len(pha)
+        //colGram2(pha, &fpmp)
+        colGram0(string(pha), &fpmp)
+    }
+    sp.SplitRBM(src, cal)
+    si := sortedItems{make([]fpItem, len(fpmp))}
+    for k, v := range fpmp {
+        si.items = append(si.items, fpItem{k, v})
+    }
+    // first sort by cnt desc, get top lMax items
+    sort.Sort(&si)
+    i := len(fpmp)
+    if i > lMax { i = lMax }
+    fp = &fingerPrint{sortedItems{si.items[:i]}}
+    return
+}
+
+
+func BenchmarkFingerPrint(bm *testing.B) {
+    src := "Condiciones específicas de uso de Galeon Centro de ayuda"
+    for i := 0; i < bm.N; i++ {
+        _, _ = getFingerPrint(src)
+    }
+}
+
+
+func BenchmarkFingerPrint2(bm *testing.B) {
+    src := []byte("Condiciones específicas de uso de Galeon Centro de ayuda")
+    for i := 0; i < bm.N; i++ {
+        _, _ = getFingerPrint2(src)
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
 
 func TestLanguage(tst *testing.T) {
     //dat := []string{"Condiciones específicas de uso de Galeon Centro de ayuda", "spanish"}
@@ -119,21 +178,7 @@ func BenchmarkSplitByByte(bm *testing.B) {
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
-type Splitter struct {
-    mp []byte
-}
-
-
-func MakeSplitter(seps []byte) *Splitter {
-    sp := &Splitter{make([]byte, 256)}
-    for i := range seps {
-        sp.mp[seps[i]] = '1'
-    }
-    return sp
-}
-
-
+//////////////////////////////////////////////////////////////////
 func TestGram5(tst *testing.T) {
     //var u uint64
     Gram5t([]byte{1}, tst)
@@ -169,10 +214,75 @@ func Gram5t(src []byte, tst *testing.T) uint64 {
 }
 
 
-func Gram5(src []byte, dst map[uint64]uint32) {
+func Gram5(src []byte, dst *map[uint64]int) {
+    und := uint64('_')
+    u64 := und
+    //tst.Log("-------------------")
+    var i, j int
+    for j = 0; j < len(src); j++ {
+        for i = 0; i < 4 && ((i + j) < len(src)); i++ {
+            //tst.Logf("-%x", u64)
+            (*dst)[u64] += 1
+            u64 = (u64 << 8) | uint64(src[i + j])
+        }
+        if i < 4 {
+            //tst.Logf("=%x", u64)
+            (*dst)[u64] += 1
+            u64 = (u64 << 8) | und
+        }
+        //tst.Logf("+%x", u64)
+        (*dst)[u64] += 1
+        u64 = uint64(src[j])
+    }
+    //tst.Logf("*%x", u64)
+    (*dst)[u64] += 1
+    //tst.Logf("x%x", (u64 << 8) + und)
+    (*dst)[(u64 << 8) + und] += 1
+    //tst.Logf("y%x", und)
+    (*dst)[und] += 1
 }
 
 
+func BenchmarkGram5(bm *testing.B) {
+    src := []byte("te2t3s4i5n6g7aaaaawmd")
+    dst := make(map[uint64]int)
+    for i := 0; i < bm.N; i++ {
+        Gram5(src, &dst)
+    }
+}
+
+func BenchmarkColGram2(bm *testing.B) {
+    src := []byte("te2t3s4i5n6g7aaaaawmd")
+    dst := make(map[string]int)
+    for i := 0; i < bm.N; i++ {
+        colGram2(src, &dst)
+    }
+}
+
+func BenchmarkColGram(bm *testing.B) {
+    src := "te2t3s4i5n6g7aaaaawmd"
+    dst := make(map[string]int)
+    for i := 0; i < bm.N; i++ {
+        colGram(src, &dst)
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+type Splitter struct {
+    mp []byte
+}
+
+
+func MakeSplitter(seps []byte) *Splitter {
+    sp := &Splitter{make([]byte, 256)}
+    for i := range seps {
+        sp.mp[seps[i]] = '1'
+    }
+    return sp
+}
+
+/*
 func (sp *Splitter)CalGram5(src []byte, dst map[uint64]uint32) {
     b, i, mp := 0, 0, sp.mp
     for ; i < len(src); i++ {
@@ -183,7 +293,7 @@ func (sp *Splitter)CalGram5(src []byte, dst map[uint64]uint32) {
     }
     if b < i { Gram5(src[b:i], dst) }
 }
-
+*/
 
 func (sp *Splitter)Split(src string) []string {
     ret := make([]string, 0, len(src) / 3)
@@ -238,7 +348,60 @@ func (sp *Splitter)SplitRightB(src []byte) [][]byte {
     }
     return ret
 }
+func (sp *Splitter)SplitRBM(src []byte, dst func(phase []byte)) {
+    b, i, mp := 0, 0, sp.mp
+    for ; i < len(src); i++ {
+        if mp[src[i]] == '1' {
+            if b < i {
+                src[i] = '_'
+                if b == 0 {
+                    //ret = append(ret, src[b:i + 1])
+                    //dst(src[b:i + 1])
+                    dst(append([]byte("_"), src[b:i + 1]...))
+                } else {
+                    src[b - 1] = '_'
+                    //ret = append(ret, src[b -1:i + 1])
+                    dst(src[b - 1:i + 1])
+                }
+            }
+            b = i + 1
+        }
+    }
+    if b < i {
+        s := src[b:i]
+        if b == 0 {
+            s = append([]byte("_"), s...)
+        } else {
+            s = src[b - 1:i]
+            s[0] = '_'
+        }
+        if i == len(src) {
+            s = append(s, '_')
+        }
+        dst(s)
+    }
+}
 
+
+func TestSplitRBM(tst *testing.T) {
+    seps := []byte("0123456789 \t\r\n\v")
+    sp := MakeSplitter(seps)
+    dst := func(src []byte) {
+        tst.Log(string(src))
+    }
+    sp.SplitRBM([]byte("a"), dst)
+    sp.SplitRBM([]byte("a "), dst)
+    sp.SplitRBM([]byte(" a"), dst)
+    sp.SplitRBM([]byte("ab"), dst)
+    sp.SplitRBM([]byte(" ab"), dst)
+    sp.SplitRBM([]byte("ab "), dst)
+    sp.SplitRBM([]byte("a b"), dst)
+    sp.SplitRBM([]byte("abc"), dst)
+    sp.SplitRBM([]byte("abcd"), dst)
+    sp.SplitRBM([]byte("ab cd"), dst)
+    sp.SplitRBM([]byte("abcde"), dst)
+    sp.SplitRBM([]byte("abc  de"), dst)
+}
 
 func (sp *Splitter)fakeSplit(src string) (cnt int) {
     b, i, mp := 0, 0, sp.mp
