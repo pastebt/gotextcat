@@ -132,44 +132,6 @@ func colGram(phase string, dst *map[string]int) {
 }
 
 
-func colGram0(phase string, dst *map[string]int) {
-    n := len(phase)
-    for i := 0; i < n; i++ {
-        m := i + gramN
-        if m > n {m = n}
-        for j := i + 1; j <= m; j++ {
-            c := phase[i:j]
-            (*dst)[c] = (*dst)[c] + 1
-        }
-    }
-}
-
-
-func colGram2(phase []byte, dst *map[string]int) {
-    n := len(phase)
-    for i := 0; i < n; i++ {
-        for j := i; j < (i + gramN) && j < n; j++ {
-            c := string(phase[i:j + 1])
-            (*dst)[c] = (*dst)[c] + 1
-        }
-    }
-}
-
-
-// for banchmark compare
-func xcolGram2(phase []byte, dst *map[string]int) {
-    b, e := phase[0], phase[len(phase) - 1]
-    phase[0], phase[len(phase) - 1] = '_', '_'
-    n := len(phase)
-    for i := 0; i < n; i++ {
-        for j := i; j < (i + gramN) && j < n; j++ {
-            c := string(phase[i:j + 1])
-            (*dst)[c] = (*dst)[c] + 1
-        }
-    }
-    phase[0], phase[len(phase) - 1] = b, e
-}
-
 
 func getFingerPrint(src string) (fp *fingerPrint, size int) {
     var fpmp = make(map[string]int)
